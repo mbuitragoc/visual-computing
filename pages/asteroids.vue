@@ -1,19 +1,37 @@
 <template>
   <div class="flex flex-col items-center justify-center gap-16">
     <span
-      class="font-poppins text-center text-[2.125rem] font-bold leading-normal text-white"
+      class="text-center font-poppins text-[2.125rem] font-bold leading-normal text-white"
     >
       ASTEROIDS
+    </span>
+    <div class="flex justify-evenly gap-16">
+      <span
+        class="text-center font-poppins text-[2.125rem] font-bold leading-normal text-white"
+      >
+        Puntaje: {{ score }}
+      </span>
+      <span
+        class="text-center font-poppins text-[2.125rem] font-bold leading-normal text-white"
+      >
+        Vidas: {{ lifes }}
+      </span>
+    </div>
+    <span v-if="gameOver" class="font-popins text-[2rem] text-red-500">
+      Game Over please restart
     </span>
     <P5Wrapper :sketch="sketch" />
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import p5 from "p5";
 import { Howl, Howler } from "howler";
+let score = ref(0);
+let lifes = ref(3);
+let gameOver = ref(false);
 
-let sound = null;
+let sound: Howl;
 const playAudio = () => {
   if (!sound) {
     sound = new Howl({
@@ -22,11 +40,14 @@ const playAudio = () => {
       preload: true,
     });
   }
-  Howler.ctx.resume().then(() => {
-    sound.play();
-  }).catch((err) => {
-    console.error("Error resuming AudioContext:", err);
-  });
+  Howler.ctx
+    .resume()
+    .then(() => {
+      sound.play();
+    })
+    .catch((err) => {
+      console.error("Error resuming AudioContext:", err);
+    });
 };
 
 const sketch = (p5: p5) => {
@@ -162,7 +183,7 @@ const sketch = (p5: p5) => {
   }
 
   class Asteroid {
-    constructor(pos, r) {
+    constructor(pos?: any, r?: any) {
       if (pos) {
         this.pos = pos.copy();
       } else {
@@ -221,19 +242,20 @@ const sketch = (p5: p5) => {
     }
   }
 
-  let ship;
-  let lasers = [];
-  let asteroids = [];
+  let ship: Ship;
+  let lasers: Laser[] = [];
+  let asteroids: Asteroid[] = [];
 
   p5.preload = () => {};
 
   p5.setup = () => {
-    p5.createCanvas(1020, 960);
+    p5.createCanvas(960, 720);
     ship = new Ship();
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 10; i++) {
       asteroids.push(new Asteroid());
     }
   };
+
   p5.draw = () => {
     p5.background(0);
     ship.show();
@@ -247,6 +269,7 @@ const sketch = (p5: p5) => {
       } else {
         for (let j = asteroids.length - 1; j >= 0; j--) {
           if (lasers[i].hits(asteroids[j])) {
+            score.value += 10;
             if (asteroids[j].r > 20) {
               let newAsteroids = asteroids[j].breakup();
               asteroids = asteroids.concat(newAsteroids);
@@ -262,7 +285,13 @@ const sketch = (p5: p5) => {
     for (let i = asteroids.length - 1; i >= 0; i--) {
       if (ship.hits(asteroids[i])) {
         console.log("opps");
-        p5.noLoop();
+        lifes.value -= 1;
+        if (lifes.value === 0) {
+          p5.noLoop();
+          gameOver.value = true;
+        } else {
+          ship = new Ship();
+        }
       }
       asteroids[i].update();
       asteroids[i].show();
@@ -286,9 +315,19 @@ const sketch = (p5: p5) => {
       ship.setRotation(-0.1);
     } else if (p5.keyCode === p5.UP_ARROW) {
       ship.boosting(true);
+    } else if (p5.key === "r") {
+      score.value = 0;
+      lifes.value = 3;
+      gameOver.value = false;
+      ship = new Ship();
+      p5.loop();
+    } else if (p5.keyCode === p5.ESCAPE) {
+      p5.noLoop();
     }
   };
 };
+
+// sketch(p5);
 </script>
 
 <style></style>
