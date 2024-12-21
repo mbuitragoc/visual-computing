@@ -66,7 +66,7 @@ const playShooting = () => {
     .resume()
     .then(() => {
       laserSound.play();
-      laserSound.volume(0.3);
+      laserSound.volume(0.1);
     })
     .catch((err) => {
       console.error("Error resuming AudioContext:", err);
@@ -85,7 +85,7 @@ const playCollision = () => {
   Howler.ctx
     .resume()
     .then(() => {
-      collisionSound.volume(0.5);
+      collisionSound.volume(0.1);
       collisionSound.play();
     })
     .catch((err) => {
