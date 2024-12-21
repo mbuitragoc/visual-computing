@@ -58,6 +58,7 @@ module.exports = {
       },
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
+        retro: ["PressStart2P", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

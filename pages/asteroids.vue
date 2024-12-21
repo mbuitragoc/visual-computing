@@ -1,23 +1,27 @@
 <template>
   <div class="flex flex-col items-center justify-center gap-16">
     <span
-      class="text-center font-poppins text-[2.125rem] font-bold leading-normal text-white"
+      class="font-retro text-center text-[2.125rem] font-bold leading-normal text-white"
     >
       ASTEROIDS
     </span>
     <div class="flex justify-evenly gap-16">
       <span
         ref="scoreDisplay"
-        class="text-center font-poppins text-[2.125rem] font-bold leading-normal text-white"
+        class="font-retro text-center text-[2.125rem] font-bold leading-normal text-white"
       >
         Puntaje: {{ animatedScore }}
       </span>
       <span
-        class="text-center font-poppins text-[2.125rem] font-bold leading-normal text-white"
+        v-if="!gameOver"
+        class="font-retro text-center text-[2.125rem] font-bold leading-normal text-white"
       >
-        Vidas: {{ lifes }}
+        Vidas:
+        <span v-for="life in lifes" :key="life" class="pl-2">
+          <Icon name="pixelarticons:heart" class="text-red-500"></Icon>
+        </span>
       </span>
-      <span v-if="gameOver" class="font-popins text-[2rem] text-red-500">
+      <span v-else class="font-retro text-[2rem] text-red-500">
         Game Over please restart
       </span>
     </div>
@@ -745,6 +749,7 @@ const sketch = (p5: p5) => {
       startGame();
     } else if (gameState === "GAMEOVER" && p5.keyCode === p5.ENTER) {
       resetGame();
+      gameOver.value = false;
     }
 
     if (p5.key === " ") {
