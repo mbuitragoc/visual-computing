@@ -49,40 +49,12 @@
         <ol class="mt-4">
           <li v-for="(highScore, index) in highScores" :key="index">
             <span class="font-retro text-[1.125rem] text-white">
-              {{ index }}. {{ highScore }}
+              {{ index + 1 }}. {{ highScore }}
             </span>
           </li>
         </ol>
       </div>
       <P5Wrapper class="m-auto" :sketch="sketch" />
-    </div>
-    <div class="flex items-center justify-evenly gap-16">
-      <div
-        class="rounded-lg border border-gray-200 bg-[#669bbc]/60 p-4 hover:bg-[#669bbc]/90"
-      >
-        <NuxtLink
-          to="https://github.com/mbuitragoc/visual-computing"
-          target="_blank"
-        >
-          <div class="flex items-center gap-2">
-            <Icon name="fa-brands:github" class="text-4xl text-white"></Icon>
-            <span class="font-poppins text-white">GitHub for webpage</span>
-          </div>
-        </NuxtLink>
-      </div>
-      <div
-        class="rounded-lg border border-gray-200 bg-[#669bbc]/60 p-4 hover:bg-[#669bbc]/90"
-      >
-        <NuxtLink
-          to="https://github.com/dcamelos/visual-computing-WK-1"
-          target="_blank"
-        >
-          <div class="flex items-center gap-2">
-            <Icon name="fa-brands:github" class="text-4xl text-white"></Icon>
-            <span class="font-poppins text-white">Github for p5.js</span>
-          </div>
-        </NuxtLink>
-      </div>
     </div>
   </div>
 </template>
