@@ -1,5 +1,5 @@
 <template>
-  <div class="relative flex flex-col bg-slate-900">
+  <div class="relative flex flex-col bg-[#003049]">
     <main class="min-h-screen">
       <slot />
     </main>

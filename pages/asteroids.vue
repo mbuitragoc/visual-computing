@@ -1,14 +1,28 @@
 <template>
-  <div class="flex flex-col items-center justify-center gap-16">
-    <span
-      class="font-retro text-center text-[2.125rem] font-bold leading-normal text-white"
-    >
-      ASTEROIDS
-    </span>
-    <div class="flex justify-evenly gap-16">
+  <div class="flex flex-col items-center justify-center gap-12">
+    <div class="mt-8 flex items-center">
+      <span
+        class="font-retro m-auto text-center text-[2.125rem] font-bold leading-normal text-white"
+      >
+        ASTEROIDS
+      </span>
+      <Button
+        class="ml-4 size-16 bg-none"
+        @click="backgroundMusicPlaying = !backgroundMusicPlaying"
+      >
+        <Icon
+          v-if="backgroundMusicPlaying"
+          name="pixelarticons:volume-2"
+          class="size-[1.5rem]"
+        />
+        <Icon v-else name="pixelarticons:volume-x" class="size-[1.5rem]" />
+      </Button>
+    </div>
+    <div class="flex items-center justify-evenly gap-16">
       <span
         ref="scoreDisplay"
         class="font-retro text-center text-[2.125rem] font-bold leading-normal text-white"
+        fallback=""
       >
         Puntaje: {{ animatedScore }}
       </span>
@@ -21,11 +35,55 @@
           <Icon name="pixelarticons:heart" class="text-red-500"></Icon>
         </span>
       </span>
-      <span v-else class="font-retro text-[2rem] text-red-500">
-        Game Over please restart
+      <span class="font-retro text-[1.5rem] text-white">
+        Nivel:{{ scoreMultiplier }}
       </span>
     </div>
-    <P5Wrapper :sketch="sketch" />
+    <div class="flex items-start gap-4">
+      <div
+        v-if="gameOver"
+        class="mt-2 flex flex-col items-center rounded-2xl border border-gray-300 bg-[#14213d] p-4"
+      >
+        <h2 class="font-retro text-[1.75rem] text-red-500">Game Over</h2>
+        <h3 class="font-retro text-[1.25rem] text-red-500">High Scores</h3>
+        <ol class="mt-4">
+          <li v-for="(highScore, index) in highScores" :key="index">
+            <span class="font-retro text-[1.125rem] text-white">
+              {{ index }}. {{ highScore }}
+            </span>
+          </li>
+        </ol>
+      </div>
+      <P5Wrapper class="m-auto" :sketch="sketch" />
+    </div>
+    <div class="flex items-center justify-evenly gap-16">
+      <div
+        class="rounded-lg border border-gray-200 bg-[#669bbc]/60 p-4 hover:bg-[#669bbc]/90"
+      >
+        <NuxtLink
+          to="https://github.com/mbuitragoc/visual-computing"
+          target="_blank"
+        >
+          <div class="flex items-center gap-2">
+            <Icon name="fa-brands:github" class="text-4xl text-white"></Icon>
+            <span class="font-poppins text-white">GitHub for webpage</span>
+          </div>
+        </NuxtLink>
+      </div>
+      <div
+        class="rounded-lg border border-gray-200 bg-[#669bbc]/60 p-4 hover:bg-[#669bbc]/90"
+      >
+        <NuxtLink
+          to="https://github.com/dcamelos/visual-computing-WK-1"
+          target="_blank"
+        >
+          <div class="flex items-center gap-2">
+            <Icon name="fa-brands:github" class="text-4xl text-white"></Icon>
+            <span class="font-poppins text-white">Github for p5.js</span>
+          </div>
+        </NuxtLink>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -39,9 +97,31 @@ import { Howl, Howler } from "howler";
 let score = ref(0);
 let lifes = ref(3);
 let gameOver = ref(false);
+let scoreMultiplier = ref(1);
+const highScores = ref<number[]>([]);
+
+const HIGH_SCORE_KEY = "asteroids_high_scores";
+const loadHighScores = () => {
+  const storedScores = JSON.parse(localStorage.getItem(HIGH_SCORE_KEY) || "[]");
+  highScores.value = storedScores;
+};
+
+const saveHighScores = () => {
+  localStorage.setItem(HIGH_SCORE_KEY, JSON.stringify(highScores.value));
+};
+
+const updateHighScores = () => {
+  highScores.value.push(score.value);
+  highScores.value.sort((a, b) => b - a);
+  if (highScores.value.length > 10) {
+    highScores.value = highScores.value.slice(0, 10);
+  }
+  saveHighScores();
+};
 
 const animatedScore = ref(score.value);
 const scoreDisplay = ref(null);
+const backgroundMusicPlaying = ref(false);
 
 watch(
   () => score.value,
@@ -56,6 +136,21 @@ watch(
     });
   },
 );
+
+watch(
+  () => backgroundMusicPlaying.value,
+  (newState) => {
+    if (newState) {
+      backgroundMusic.play();
+    } else {
+      backgroundMusic.stop();
+    }
+  },
+);
+
+onMounted(() => {
+  loadHighScores();
+});
 
 let laserSound: Howl;
 const playShooting = () => {
@@ -97,6 +192,30 @@ const playCollision = () => {
     });
 };
 
+let backgroundMusic: Howl;
+const playBackgroundMusic = () => {
+  if (!backgroundMusic) {
+    backgroundMusic = new Howl({
+      src: ["/audio/solveThePuzzle.ogg"],
+      autoplay: true,
+      loop: true,
+      preload: true,
+    });
+  }
+  Howler.ctx
+    .resume()
+    .then(() => {
+      backgroundMusic.play();
+      backgroundMusic.volume(0.01);
+      backgroundMusic.loop(true);
+    })
+    .catch((err) => {
+      console.error("Error resuming AudioContext:", err);
+    });
+};
+
+playBackgroundMusic();
+
 const sketch = (p5: p5) => {
   class Ship {
     pos: p5.Vector;
@@ -115,6 +234,34 @@ const sketch = (p5: p5) => {
       this.vel = p5.createVector(0, 0);
       this.acc = p5.createVector(0, 0);
       this.isBoosting = false;
+    }
+
+    respawn(asteroids: Asteroid[], safeDistance: number) {
+      let isSafe = false;
+
+      while (!isSafe) {
+        // Pick a random position within canvas bounds
+        const randomX = p5.random(this.r, p5.width - this.r);
+        const randomY = p5.random(this.r, p5.height - this.r);
+        const randomPos = p5.createVector(randomX, randomY);
+
+        isSafe = asteroids.every((asteroid) => {
+          const distance = p5.dist(
+            randomPos.x,
+            randomPos.y,
+            asteroid.pos.x,
+            asteroid.pos.y,
+          );
+          return distance > asteroid.r + safeDistance;
+        });
+
+        if (isSafe) {
+          this.pos = randomPos;
+        }
+      }
+
+      this.vel.set(0, 0);
+      this.acc.set(0, 0);
     }
 
     show() {
@@ -224,10 +371,10 @@ const sketch = (p5: p5) => {
     pos: p5.Vector;
     vel: p5.Vector;
 
-    constructor(spos: p5.Vector, angle: number) {
+    constructor(spos: p5.Vector, angle: number, speed: number = 10) {
       this.pos = p5.createVector(spos.x, spos.y);
       this.vel = p5.createVector(Math.cos(angle), Math.sin(angle));
-      this.vel.mult(10);
+      this.vel.mult(speed);
     }
 
     update() {
@@ -269,12 +416,32 @@ const sketch = (p5: p5) => {
     r: any;
     totalVertices: number;
     offset: number[];
-    constructor(pos?: any, r?: any) {
-      if (pos) {
-        this.pos = pos.copy();
-      } else {
-        this.pos = p5.createVector(p5.random(p5.width), p5.random(p5.height));
+    constructor(ship: Ship, safeDistance: number, pos?: any, r?: any) {
+      let isSafe = false;
+      let newPos;
+
+      while (!isSafe && !pos) {
+        if (pos) {
+          newPos = pos.copy();
+        } else {
+          newPos = p5.createVector(p5.random(p5.width), p5.random(p5.height));
+        }
+
+        const distanceToShip = p5.dist(
+          newPos.x,
+          newPos.y,
+          ship.pos.x,
+          ship.pos.y,
+        );
+        isSafe = distanceToShip > safeDistance;
       }
+
+      if (pos) {
+        newPos = pos.copy();
+      }
+
+      this.pos = newPos;
+
       const angle = Math.random() * Math.PI * 2; // Random angle in radians
       this.v = {
         x: Math.cos(angle),
@@ -312,10 +479,10 @@ const sketch = (p5: p5) => {
 
       p5.pop();
     }
-    breakup() {
+    breakup(ship: Ship, safeDistance: number) {
       let newA = [];
-      newA[0] = new Asteroid(this.pos, this.r / 2);
-      newA[1] = new Asteroid(this.pos, this.r / 2);
+      newA[0] = new Asteroid(ship, safeDistance, this.pos, this.r / 2);
+      newA[1] = new Asteroid(ship, safeDistance, this.pos, this.r / 2);
       return newA;
     }
     edges() {
@@ -453,7 +620,7 @@ const sketch = (p5: p5) => {
     }
 
     hits(asteroid: Asteroid) {
-      if (this.isActive == true) {
+      if (this.isActive) {
         const d = p5.dist(
           this.pos.x,
           this.pos.y,
@@ -472,7 +639,7 @@ const sketch = (p5: p5) => {
     determineSize() {
       const x = Math.floor(Math.random() * 5);
       if (x == 0) {
-        return 20;
+        return 30;
       } else {
         return 40;
       }
@@ -557,13 +724,13 @@ const sketch = (p5: p5) => {
   p5.setup = () => {
     p5.createCanvas(960, 720);
     p5.frameRate(60);
-
     ship = new Ship();
     alien = new Alien();
     alienLaserCooldown = 60;
     for (let i = 0; i < 5; i++) {
-      asteroids.push(new Asteroid());
+      asteroids.push(new Asteroid(ship, 100));
     }
+    ship.respawn(asteroids, 100);
   };
 
   p5.draw = () => {
@@ -575,6 +742,8 @@ const sketch = (p5: p5) => {
       playGame();
     } else if (gameState === "GAMEOVER") {
       drawGameOver();
+      p5.noLoop();
+      updateHighScores();
     }
   };
 
@@ -608,15 +777,15 @@ const sketch = (p5: p5) => {
       if (lasers[i] && lasers[i].offscreen()) {
         lasers.splice(i, 1);
       } else if (alien.isActive && lasers[i].hits(alien)) {
-        // hitSound.play();
+        score.value += 100 * scoreMultiplier.value;
         alien.restartValues();
         lasers.splice(i, 1);
       } else {
         for (let j = asteroids.length - 1; j >= 0; j--) {
           if (lasers[i].hits(asteroids[j])) {
-            score.value += 10;
+            score.value += 10 * scoreMultiplier.value;
             if (asteroids[j].r > 20) {
-              let newAsteroids = asteroids[j].breakup();
+              let newAsteroids = asteroids[j].breakup(ship, 100);
               asteroids = asteroids.concat(newAsteroids);
             }
             asteroids.splice(j, 1);
@@ -634,7 +803,7 @@ const sketch = (p5: p5) => {
           gameOver.value = true;
           gameState = "GAMEOVER";
         } else {
-          ship = new Ship();
+          ship.respawn(asteroids, 100);
         }
       }
 
@@ -649,19 +818,24 @@ const sketch = (p5: p5) => {
 
     if (alien.isActive) {
       if (alienLaserCooldown <= 0) {
-        let direction = p5.createVector(
-          ship.pos.x - alien.pos.x,
-          ship.pos.y - alien.pos.y,
+        const accuracy = Math.max(1, 10 - scoreMultiplier.value); // Decreases as the level increases (min radius = 1)
+
+        const offsetX = p5.random(-accuracy, accuracy);
+        const offsetY = p5.random(-accuracy, accuracy);
+        const target = p5.createVector(
+          ship.pos.x + offsetX,
+          ship.pos.y + offsetY,
         );
-        let angle = Math.atan(direction.y / direction.x);
-        if (ship.pos.x <= alien.pos.x) {
-          if (ship.pos.y > alien.pos.y) {
-            angle += p5.PI;
-          } else {
-            angle -= p5.PI;
-          }
-        }
-        alienLasers.push(new Laser(alien.pos, angle));
+
+        const direction = p5
+          .createVector(target.x - alien.pos.x, target.y - alien.pos.y)
+          .normalize();
+
+        const angle = Math.atan2(direction.y, direction.x);
+
+        alienLasers.push(
+          new Laser(alien.pos.copy(), angle, 4 + scoreMultiplier.value),
+        );
         playShooting();
         alienLaserCooldown = 60;
       } else {
@@ -678,7 +852,7 @@ const sketch = (p5: p5) => {
           gameOver.value = true;
           gameState = "GAMEOVER";
         } else {
-          ship = new Ship();
+          ship.respawn(asteroids, 100);
         }
         alienLasers.splice(i, 1);
         continue;
@@ -689,7 +863,7 @@ const sketch = (p5: p5) => {
         for (let j = asteroids.length - 1; j >= 0; j--) {
           if (alienLasers[i].hits(asteroids[j])) {
             if (asteroids[j].r > 20) {
-              let newAsteroids = asteroids[j].breakup();
+              let newAsteroids = asteroids[j].breakup(ship, 100);
               asteroids = asteroids.concat(newAsteroids);
             }
             asteroids.splice(j, 1);
@@ -699,6 +873,15 @@ const sketch = (p5: p5) => {
         }
       }
     }
+
+    if (asteroids.length === 0) {
+      scoreMultiplier.value += 1;
+      lifes.value += 1;
+      for (let i = 0; i < 5 + scoreMultiplier.value; i++) {
+        asteroids.push(new Asteroid(ship, 100));
+      }
+    }
+
     drawScore();
   };
 
@@ -723,10 +906,10 @@ const sketch = (p5: p5) => {
 
   let startGame = () => {
     gameState = "PLAYING";
-    ship = new Ship();
+    ship.respawn(asteroids, 100);
     asteroids = [];
     for (let i = 0; i < 5; i++) {
-      asteroids.push(new Asteroid());
+      asteroids.push(new Asteroid(ship, 100));
     }
     alien = new Alien();
     lasers = [];
@@ -736,6 +919,7 @@ const sketch = (p5: p5) => {
   };
 
   let resetGame = () => {
+    p5.loop();
     gameState = "MENU";
   };
 
