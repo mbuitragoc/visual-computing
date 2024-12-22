@@ -24,8 +24,29 @@
           </div>
         </div>
       </NuxtLink>
+      <div
+        class="flex h-full flex-col items-center justify-evenly gap-4 rounded-2xl border border-gray-200 bg-[#669bbc] p-4"
+      >
+        <span class="font-poppins text-[2.75rem] font-semibold text-[#003049]">
+          Integrantes
+        </span>
+        <div class="flex flex-col gap-2">
+          <span class="font-poppins text-[1.25rem] text-[#003049]"
+            >David andres camelo suarez
+          </span>
+          <span class="font-poppins text-[1.25rem] text-[#003049]">
+            Miguel Angel Buitrago Castillo
+          </span>
+          <span class="font-poppins text-[1.25rem] text-[#003049]"
+            >Cristian Liu Chois Amaya
+          </span>
+          <span class="font-poppins text-[1.25rem] text-[#003049]"
+            >Santiago Villota</span
+          >
+        </div>
+      </div>
     </div>
-    <div class="flex items-center justify-evenly gap-16 mt-12">
+    <div class="mt-12 flex items-center justify-evenly gap-16">
       <div
         class="rounded-lg border border-gray-200 bg-[#669bbc]/60 p-4 hover:bg-[#669bbc]/90"
       >
