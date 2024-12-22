@@ -309,7 +309,7 @@ const sketch = (p5: p5) => {
       // Debug: Draw the circle based on the ship's radius
       p5.stroke(0, 255, 0); // Use a green stroke for visibility
       p5.noFill(); // Ensure the circle is not filled
-      p5.ellipse(0, 0, this.r * 2); // Draw the circle with diameter `2 * this.r`
+      // p5.ellipse(0, 0, this.r * 2); // Draw the circle with diameter `2 * this.r`
 
       let arcCenter = p5.createVector((x2 + x3) / 2, (y2 + y3) / 2);
       p5.stroke(255);
@@ -447,7 +447,7 @@ const sketch = (p5: p5) => {
 
       p5.stroke(255, 0, 0); // Use a red stroke for visibility
       p5.noFill(); // Ensure the circle is not filled
-      p5.ellipse(0, 0, this.r * 2); // Draw the circle with diameter `2 * this.r`
+      // p5.ellipse(0, 0, this.r * 2); // Draw the circle with diameter `2 * this.r`
 
       p5.pop();
     }
